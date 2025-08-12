@@ -1,0 +1,5 @@
+// Hello World in OromoScript
+taasis main() {
+    jechi faran = "Hello, World!";
+    barbaadi(faran);
+}
