@@ -1,59 +1,53 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
-#include "../include/lexer/Lexer.h"
-#include "../include/parser/Parser.h"
-#include "../include/semantic/SemanticAnalyzer.h"
-#include "../include/evaluator/Evaluator.h"
+#include <string>
+#include "lexer/Lexer.h"
+#include "parser/Parser.h"
+#include "semantic/SemanticAnalyzer.h"
+#include "evaluator/Evaluator.h"
+#include "utils/Errors.h"
 
-using namespace OroScript;
-
-std::string readFile(const std::string& filename) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Error: Could not open file " << filename << std::endl;
-        return "";
-    }
-    
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    return buffer.str();
-}
-
-int main(int argc, char* argv[]) {
+int main(int argc, char** argv) {
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <filename.oro>" << std::endl;
+        std::cerr << "Usage: afaancode <file.oro>" << std::endl;
         return 1;
     }
-    
+
     std::string filename = argv[1];
-    std::string source = readFile(filename);
-    
-    if (source.empty()) {
+    std::ifstream file(filename);
+    if (!file) {
+        std::cerr << "Error: Could not open file " << filename << std::endl;
         return 1;
     }
-    
+
+    std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    file.close();
+
     try {
-        // Lexical analysis
+        // Lex
         Lexer lexer(source);
-        auto tokens = lexer.tokenize();
-        
-        // Parsing
+        std::vector<Token> tokens = lexer.lex();
+
+        // Parse
         Parser parser(tokens);
-        auto program = parser.parse();
-        
+        std::unique_ptr<Node> ast = parser.parse();
+
         // Semantic analysis
         SemanticAnalyzer analyzer;
-        analyzer.analyze(*program);
-        
-        // Evaluation
+        analyzer.analyze(ast.get());
+
+        // Evaluate (interpret)
         Evaluator evaluator;
-        evaluator.evaluate(*program);
-        
+        evaluator.evaluate(ast.get());
+
+        std::cout << "Execution complete." << std::endl;
+    } catch (const SyntaxError& e) {
+        std::cerr << "Syntax error: " << e.what() << std::endl;
+        return 1;
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }
-    
+
     return 0;
 }
