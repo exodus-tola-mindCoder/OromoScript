@@ -33,6 +33,7 @@ INCLUDEDIRS	:= $(INCLUDE)
 LIBDIRS		:= $(LIB)
 FIXPATH = $(subst /,\,$1)
 RM			:= del /q /f
+RMDIR		:= rmdir /s /q
 MD	:= mkdir
 else
 MAIN	:= main
@@ -41,6 +42,7 @@ INCLUDEDIRS	:= $(shell find $(INCLUDE) -type d)
 LIBDIRS		:= $(shell find $(LIB) -type d)
 FIXPATH = $1
 RM = rm -f
+RMDIR		:= rm -rf
 MD	:= mkdir -p
 endif
 
@@ -54,7 +56,8 @@ LIBS		:= $(patsubst %,-L%, $(LIBDIRS:%/=%))
 SOURCES		:= $(wildcard $(patsubst %,%/*.cpp, $(SOURCEDIRS)))
 
 # define the C object files
-OBJECTS		:= $(SOURCES:.cpp=.o)
+# map source files to object files in the output directory, preserving subdirectories
+OBJECTS		:= $(patsubst $(SRC)/%.cpp,$(OUTPUT)/%.o,$(SOURCES))
 
 # define the dependency output files
 DEPS		:= $(OBJECTS:.o=.d)
@@ -73,7 +76,7 @@ all: $(OUTPUT) $(MAIN)
 $(OUTPUT):
 	$(MD) $(OUTPUT)
 
-$(MAIN): $(OBJECTS)
+$(MAIN): $(OBJECTS) | $(OUTPUT)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(OUTPUTMAIN) $(OBJECTS) $(LFLAGS) $(LIBS)
 
 # include all .d files
@@ -84,14 +87,13 @@ $(MAIN): $(OBJECTS)
 # the rule(a .c file) and $@: the name of the target of the rule (a .o file)
 # -MMD generates dependency output files same name as the .o file
 # (see the gnu make manual section about automatic variables)
-.cpp.o:
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -MMD $<  -o $@
+$(OUTPUT)/%.o: $(SRC)/%.cpp
+	@$(MD) $(dir $@)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -MMD $< -o $@
 
 .PHONY: clean
 clean:
-	$(RM) $(OUTPUTMAIN)
-	$(RM) $(call FIXPATH,$(OBJECTS))
-	$(RM) $(call FIXPATH,$(DEPS))
+	$(RMDIR) $(call FIXPATH,$(OUTPUT))
 	@echo Cleanup complete!
 
 run: all

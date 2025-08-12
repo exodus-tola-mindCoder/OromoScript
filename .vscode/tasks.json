@@ -37,23 +37,26 @@
                 "command": "powershell",
                 "args": [
                     "-c",
-                    "'mingw32-make run'"
+                    "mingw32-make run"
                 ]
             },
             "linux": {
                 "command": "bash",
                 "args": [
                     "-c",
-                    "'make run'"
+                    "make run"
                 ]
             },
             "osx": {
                 "command": "bash",
                 "args": [
                     "-c",
-                    "'make run'"
+                    "make run"
                 ]
-            }
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
         },
         {
             "label": "clean",
@@ -62,21 +65,21 @@
                 "command": "powershell",
                 "args": [
                     "-c",
-                    "'mingw32-make clean'"
+                    "mingw32-make clean"
                 ]
             },
             "linux": {
                 "command": "bash",
                 "args": [
                     "-c",
-                    "'make clean'"
+                    "make clean"
                 ]
             },
             "osx": {
                 "command": "bash",
                 "args": [
                     "-c",
-                    "'make clean'"
+                    "make clean"
                 ]
             }
         }
